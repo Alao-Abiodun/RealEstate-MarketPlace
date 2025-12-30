@@ -1,0 +1,21 @@
+{
+  "name": "RealEstate-MarketPlace",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "nodemon src/index.ts"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "mongoose": "7.6.3",
+    "morgan": "^1.10.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "dotenv": "^17.2.3",
+    "nodemon": "^3.1.11"
+  },
+  "type": "module"
+}
