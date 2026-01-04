@@ -5,6 +5,6 @@ import adRoute from './ad.route';
 const router = Router();
 
 authRoute(router);
-// adRoute(router);
+adRoute(router);
 
 export default router;

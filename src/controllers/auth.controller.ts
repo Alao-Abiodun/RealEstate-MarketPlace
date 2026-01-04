@@ -9,7 +9,7 @@ import { nanoid } from "nanoid";
 import { generateJwtToken, verifyToken } from "../utils/helpers/jwt.helper";
 import { comparePassword, hashPassword } from "../utils/helpers/bcrypt.helper";
 
-export const login = async (
+export const createOrLogin = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -26,14 +26,14 @@ export const login = async (
   }
   if (!password?.trim() && password?.length < 6) {
     return res.json({
-      message: `Password should be atleast 6 characters long`,
+      message: `Password should be at least 6 characters long`,
     });
   }
   try {
     const user = await User.findOne({ email });
     if (!user) {
       try {
-        await sendWelcomeEmail(email);
+        // await sendWelcomeEmail(email);
 
         const newUser = await User.create({
           email,
@@ -41,7 +41,7 @@ export const login = async (
           username: nanoid(6),
         });
 
-        const token = await generateJwtToken(
+        const token = generateJwtToken(
           {
             id: newUser._id,
             email: newUser.email,
