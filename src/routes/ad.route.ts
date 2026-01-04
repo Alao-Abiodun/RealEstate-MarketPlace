@@ -1,11 +1,16 @@
-import path from 'path';
-import { Router } from 'express';
-
-import { uploadImage, removeImage } from '../controllers/ad.controller';
-import { uploadFile } from '../utils/helpers/imageHandler.helper';
-
+import { Router } from "express";
+import {
+  uploadImage,
+  removeImage,
+  createAd,
+} from "../controllers/ad.controller";
+import { uploadFile } from "../utils/helpers/imageHandler.helper";
+import { userAuth } from "../middleware/authorization.middleware";
+import { createAdValidator } from "../middleware/validation/realestate.validator";
 
 export default (router: Router) => {
-    router.post('/ad/upload-image', uploadFile.any(), uploadImage);
-    router.delete('/ad/remove-image', uploadFile.any(), removeImage);
-}
+  router.use(userAuth);
+  router.post("/ad", createAdValidator, createAd);
+  router.post("/ad/upload-image", uploadFile.any(), uploadImage);
+  router.delete("/ad/remove-image", uploadFile.any(), removeImage);
+};

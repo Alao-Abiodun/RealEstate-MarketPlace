@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { forgotPassword, login } from '../controllers/auth.controller';
+import { forgotPassword, createOrLogin } from '../controllers/auth.controller';
 
 export default (router: Router) => {
-    router.post('/auth/login', login)
+    router.post('/auth/login', createOrLogin)
     router.post('/auth/forgot-password', forgotPassword)
 }

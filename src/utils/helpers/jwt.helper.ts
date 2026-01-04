@@ -1,5 +1,4 @@
-import jwt, { JwtPayload } from 'jsonwebtoken';
-
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 /**
  * JWT helper to generate a valid token for authorization
@@ -7,14 +6,20 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
  * @param expiresIn time take for token to expire
  * @returns return a valid token
  */
-export const generateJwtToken = (payload: any, expiresIn: string): string | Boolean => {
-    try {
-        const token = jwt.sign(payload, String(process.env.JWT_SECRET), expiresIn);
-        return token;
-    } catch (error) {
-        return false;
-    }
-}
+export const generateJwtToken = (
+  payload: any,
+  expiresIn: string
+): string | Boolean => {
+  try {
+    const token = jwt.sign(payload, String(process.env.JWT_SECRET), {
+      expiresIn,
+    });
+    return token;
+  } catch (error) {
+    console.log("error", error);
+    return false;
+  }
+};
 
 /**
  * JWT helper to verifiy token validation and expiration
@@ -22,10 +27,9 @@ export const generateJwtToken = (payload: any, expiresIn: string): string | Bool
  * @return string | boolean | JwtPayload
  */
 export const verifyToken = (token: string): string | Boolean | JwtPayload => {
-    try {
-        return jwt.verify(token, String(process.env.JWT_SECRET));
-    } catch (error) {
-        return false;
-    }
-}
-
+  try {
+    return jwt.verify(token, String(process.env.JWT_SECRET));
+  } catch (error) {
+    return false;
+  }
+};
