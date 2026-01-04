@@ -39,3 +39,32 @@ export const sendWelcomeEmail = async (email) => {
         throw new Error(error);
     }
 }
+
+export const sendPasswordResetEmail = async (email, code) => { const params = {
+    Source: process.env.EMAIL_FROM,
+    ReplyToAddresses: [process.env.EMAIL_TO],
+    Destination: {
+      ToAddresses: [email],
+    },
+    Message: {
+      Body: {
+        Html: {
+          Charset: "UTF-8",
+          Data: `
+                <html>
+                    <p>Good day! Here is your password reset code</p>
+                    <h2 style="color:red;">${code}</h2>
+                    <i>- Team ${process.env.APP_NAME}</i>
+</html> `,
+}, },
+      Subject: {
+        Charset: "UTF-8",
+        Data: `Password reset code - ${process.env.APP_NAME}`,
+}, },
+};
+const command = new SendEmailCommand(params); try {
+const data = await SES.send(command);
+return data;
+} catch (error) {
+throw error; }
+};
