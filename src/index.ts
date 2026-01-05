@@ -29,14 +29,15 @@ process.on('SIGINT', () => {
     process.exit(0);
 })
 
-process.on('unhandledRejection', (err) => {
+process.on('unhandledRejection', (error) => {
+    console.log('unhandledRejection', error);
     mongoose.connection.close();
     process.exit(1); // Server needs to crash and program manager will restart it
 })
 
-process.on('uncaughtException', (err) => {
+process.on('uncaughtException', (error) => {
+    console.log('uncaughtException', error);
     mongoose.connection.close();
     process.exit(1) // Server needs to crash and program manager will restart it
 })
-
 

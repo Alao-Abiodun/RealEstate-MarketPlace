@@ -19,7 +19,7 @@ export const createAdValidator = async (
   next: NextFunction
 ) => {
   await Promise.all([
-    body("photos").trim().notEmpty().withMessage("photos is required").run(req),
+    body("photos").isArray({ min: 1 }).withMessage("photos is required").run(req),
     body("price").notEmpty().withMessage("price is required").run(req),
     body("address")
       .trim()
@@ -53,7 +53,9 @@ export const createAdValidator = async (
   ]);
   const errors = validationResult(req).formatWith(errorFormatter);
   if (!errors.isEmpty()) {
-    throw new Error(errors.array().join(', '))
+    return res.status(400).json({
+      error: errors.array().join(', ')
+    })
   }
   next();
 };
