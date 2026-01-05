@@ -27,26 +27,29 @@ export const createAd = async (
 
       await Promise.all([
         Ad.create({
-            ...adData,
-            slug: slugify(
-              `${propertyType}-for-${action}-address-${address}-price-${price}-${nanoid(
-                6
-              )}`
-            ),
-            postedBy: _id,
-            location: {
-              type: "Point",
-              coordinates: [
-                geo?.location?.coordinates[0],
-                geo?.location?.coordinates[1],
-              ],
-            },
-            googleMap: geo.googleMap,
+          ...adData,
+          slug: slugify(
+            `${propertyType}-for-${action}-address-${address}-price-${price}-${nanoid(
+              6
+            )}`
+          ),
+          postedBy: _id,
+          location: {
+            type: "Point",
+            coordinates: [
+              geo?.location?.coordinates[0],
+              geo?.location?.coordinates[1],
+            ],
+          },
+          googleMap: geo.googleMap,
         }),
-        User.findByIdAndUpdate(_id, { $addToSet: { role: "Seller" } })
-      ])
+        User.findByIdAndUpdate(_id, { $addToSet: { role: "Seller" } }),
+      ]);
 
-      res.json({ success: true, message: `Successfully uploaded a ${propertyType}` });
+      res.json({
+        success: true,
+        message: `Successfully uploaded a ${propertyType}`,
+      });
     } catch (error) {
       console.error("Geocoding error:", error);
       return res.status(400).json({
@@ -58,6 +61,57 @@ export const createAd = async (
     res
       .status(500)
       .json({ error: "Failed to create ad. Please try again later." });
+  }
+};
+
+export const fetchAd = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const ad = await Ad.findOne({ slug })
+      .select("-googleMap")
+      .populate("postedBy", "name username email phone company photo logo");
+
+    if (!ad) {
+      return res.status(404).json({ error: "Ad not found" });
+    }
+
+    const related = await Ad.aggregate([
+      {
+        $geoNear: {
+          near: {
+            type: "Point",
+            coordinates: ad.location.coordinates,
+          },
+          distanceField: "dist.calculated",
+          maxDistance: 100000, // 50 km 
+          spherical: true,
+        },
+      },
+      {
+        $match: {
+          _id: { $ne: ad._id },
+          action: ad.action,
+          propertyType: ad.propertyType,
+        },
+      },
+      { $limit: 3 },
+      {
+        $project: {
+          googleMap: 0,
+        },
+      },
+    ]);
+
+    const relatedWithPopulatedPostedBy = await Ad.populate(related, {
+      path: "postedBy",
+      select: "name username email phone company photo logo",
+    });
+
+    res.json({ ad, related: relatedWithPopulatedPostedBy });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Failed to fetch. Try again." });
   }
 };
 
