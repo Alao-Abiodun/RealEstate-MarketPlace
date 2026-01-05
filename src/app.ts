@@ -6,10 +6,10 @@ const app: Application = express();
 
 import routes from './routes/index.route';
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
 app.use(cors());
 app.use(morgan("dev"))
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
 
 
 app.use('/marketplace/api/v1', routes)

@@ -3,7 +3,19 @@ const { Schema, Types } = mongoose;
 
 const adSchema = new Schema(
   {
-    photos: [{}],
+    photos: [
+      {
+        key: {
+          type: String,
+        },
+        location: {
+          type: String,
+        },
+        uploadedBy: {
+          type: String,
+        },
+      },
+    ],
     price: {
       type: String,
       maxLength: 255,
@@ -77,7 +89,6 @@ const adSchema = new Schema(
   },
   { timestamps: true }
 );
-
 
 adSchema.index({ location: "2dsphere" });
 export default mongoose.model("Ad", adSchema);

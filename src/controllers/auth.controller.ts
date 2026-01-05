@@ -6,7 +6,7 @@ import {
 import validator from "email-validator";
 import User from "../models/user.model";
 import { nanoid } from "nanoid";
-import { generateJwtToken, verifyToken } from "../utils/helpers/jwt.helper";
+import { generateJwtToken } from "../utils/helpers/jwt.helper";
 import { comparePassword, hashPassword } from "../utils/helpers/bcrypt.helper";
 
 export const createOrLogin = async (
@@ -54,6 +54,7 @@ export const createOrLogin = async (
           token,
         });
       } catch (error) {
+        console.log('error', error);
         return res.json({
           error: "Invalid email. Please use your valid email.",
         });
