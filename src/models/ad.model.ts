@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { AdDocument } from "../types/ad.types";
 const { Schema, Types } = mongoose;
 
 const adSchema = new Schema(
@@ -91,4 +92,4 @@ const adSchema = new Schema(
 );
 
 adSchema.index({ location: "2dsphere" });
-export default mongoose.model("Ad", adSchema);
+export default mongoose.model<AdDocument>("Ad", adSchema);
