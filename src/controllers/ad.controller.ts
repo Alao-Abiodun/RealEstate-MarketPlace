@@ -16,16 +16,10 @@ export const createAd = async (
 ) => {
   try {
     const { _id } = req.app.get("user");
-    const {
-      photos,
-      description,
-      address,
-      propertyType,
-      price,
-      landSize,
-      landSizeType,
-      action,
-    } = req.body;
+
+    const adData = { ...req.body };
+
+    const { propertyType, action, address, price } = adData;
 
     let geo;
     try {
@@ -33,13 +27,7 @@ export const createAd = async (
 
       await Promise.all([
         Ad.create({
-            photos,
-            description,
-            address,
-            propertyType,
-            landSize,
-            landSizeType,
-            action,
+            ...adData,
             slug: slugify(
               `${propertyType}-for-${action}-address-${address}-price-${price}-${nanoid(
                 6
@@ -61,7 +49,7 @@ export const createAd = async (
       res.json({ success: true, message: `Successfully uploaded a ${propertyType}` });
     } catch (error) {
       console.error("Geocoding error:", error);
-      return res.json({
+      return res.status(400).json({
         error: "Please enter a valid address.",
       });
     }
