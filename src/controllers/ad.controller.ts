@@ -64,7 +64,7 @@ export const createAd = async (
   }
 };
 
-export const fetchAd = async (req, res) => {
+export const fetchNearAd = async (req, res) => {
   try {
     const { slug } = req.params;
 
@@ -84,7 +84,7 @@ export const fetchAd = async (req, res) => {
             coordinates: ad.location.coordinates,
           },
           distanceField: "dist.calculated",
-          maxDistance: 100000, // 50 km 
+          maxDistance: 100000, // 50 km
           spherical: true,
         },
       },
@@ -111,6 +111,39 @@ export const fetchAd = async (req, res) => {
     res.json({ ad, related: relatedWithPopulatedPostedBy });
   } catch (err) {
     console.log(err);
+    res.status(500).json({ error: "Failed to fetch. Try again." });
+  }
+};
+
+export const adsForSellOrRent = async (req, res) => {
+  try {
+    const { actionType } = req.params;
+    let { page, limit } = req.query;
+    let filter: any = {};
+    
+    if (page & limit) {
+      filter.page = Number(page) || 1;
+      filter.limit = Number(limit) || 2;
+    }
+
+    const skip = (page - 1) * limit;
+
+    const totalAds = await Ad.countDocuments({ action: actionType });
+    const ads = await Ad.find({ action: actionType })
+      .populate("postedBy", "name username email phone company photo logo")
+      .select("-googleMap")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    return res.json({
+      ads,
+      totalAds,
+      page: Number(page),
+      totalPages: Math.ceil(totalAds / limit),
+    });
+  } catch (error) {
+    console.log("error", error);
     res.status(500).json({ error: "Failed to fetch. Try again." });
   }
 };
