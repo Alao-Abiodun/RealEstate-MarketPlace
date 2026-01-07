@@ -120,7 +120,7 @@ export const adsForSellOrRent = async (req, res) => {
     const { actionType } = req.params;
     let { page, limit } = req.query;
     let filter: any = {};
-    
+
     if (page & limit) {
       filter.page = Number(page) || 1;
       filter.limit = Number(limit) || 2;
@@ -147,6 +147,140 @@ export const adsForSellOrRent = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch. Try again." });
   }
 };
+
+export const changeAd = async (req, res) => {
+  try {
+    const { _id } = req.app.get("user");
+    const { id } = req.params;
+
+    const adOwner = await Ad.findOne({ _id: id, postedBy: _id });
+    if (!adOwner) {
+      return res.status(404).json({
+        message: "Ad Not Found!",
+      });
+    }
+
+    let updatedValues: any = {};
+
+    const allowedProps = [
+      "photos",
+      "price",
+      "address",
+      "propertyType",
+      "action",
+      "description",
+    ];
+
+    for (const prop in req.body) {
+      if (
+        Object.prototype.hasOwnProperty.call(req.body, prop) &&
+        allowedProps.includes(prop)
+      ) {
+        updatedValues[prop] = req.body[prop];
+      }
+    }
+
+    let geo;
+    try {
+      geo = await geocodeAddress(updatedValues.address);
+
+      updatedValues.slug = slugify(
+        `${updatedValues.propertyType}-for-${updatedValues.action}-address-${
+          updatedValues.address
+        }-price-${updatedValues.price}-${nanoid(6)}`
+      );
+      updatedValues.location = {
+        type: "Point",
+        coordinates: [
+          geo?.location?.coordinates[0],
+          geo?.location?.coordinates[1],
+        ],
+      };
+      updatedValues.googleMap = geo.googleMap;
+
+      await Ad.findByIdAndUpdate(
+        { _id: id },
+        { ...updatedValues },
+        { new: true }
+      ).lean();
+
+      return res.status(200).json({
+        message: "Ad updated successfully",
+      });
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      return res.status(400).json({
+        error: "Please enter a valid address.",
+      });
+    }
+  } catch (error) {
+    console.error("Ad update error:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to update ad. Please try again later." });
+  }
+};
+
+export const removeAd = async (req, res) => {
+  try {
+    const { _id } = req.app.get("user");
+    const { id } = req.params;
+
+    const adOwner = await Ad.findOne({ _id: id, postedBy: _id });
+    if (!adOwner) {
+      return res.status(404).json({
+        message: "Ad not Found!",
+      });
+    }
+
+    await Ad.deleteOne({ _id: id, postedBy: _id });
+
+    return res.status(200).json({
+      message: "Ad deleted successfully",
+    });
+  } catch (error) {
+    console.log("error", error);
+    return res.status(500).json({
+      error: "Error while trying to delete. Please try later",
+    });
+  }
+};
+
+export const userAd = async (req, res) => {
+  try {
+    const { _id } = req.app.get('user');
+    let { page, limit } = req.query;
+
+    if (page && limit) {
+      page = Number(page) || 1;
+      limit = Number(page) || 2;
+    }
+
+    const skip = (page - 1) * limit;
+
+    const totalAds = await Ad.countDocuments({ postedBy: _id });
+
+    const userAds = await Ad.find({ postedBy: _id })
+      .select('-googleMap')
+      .populate("postedBy", "name username email phone company")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+
+      return res.status(200).json({
+        message: 'User ads retrieved successfully',
+        userAds,
+        totalAds,
+        page: Number(page),
+        totalPages: Math.ceil(totalAds / limit),
+      })
+  } catch (error) {
+    console.log('error', error);
+    return res.status(500).json({
+      message: 'Error while trying to fetch user ads. Please try again later.'
+    })
+  }
+}
 
 export const uploadImage = async (req, res) => {
   try {
