@@ -282,6 +282,39 @@ export const userAd = async (req, res) => {
   }
 }
 
+export const changeAdStatus = async (req, res) => {
+  try {
+    const { _id } = req.app.get('user');
+    const { id } = req.params;
+    const { adStatus } = req.body;
+
+    const adOwner = await Ad.findOne({ _id: id, postedBy: _id })
+    if (!adOwner) {
+      return res.status(404).json({
+        error: "Ad not found"
+      })
+    }
+
+    const adStatusEnum = ['In Market', 'Deposit taken', 'Under offer', 'Sold', 'Rented', 'Off Market']
+    if (!adStatusEnum.includes(adStatus)) {
+      return res.status(400).json({
+        error: 'Invalid status'
+      })
+    }
+
+    await Ad.findByIdAndUpdate(id, { status: adStatus }, { new: true })
+
+    return res.status(200).json({
+      message: 'Ad status updated successfully'
+    })
+  } catch (error) {
+    console.log('error', error);
+    return res.status(500).json({
+      message: 'Error while trying to update user ads. Please try again later.'
+    })
+  }
+}
+
 export const uploadImage = async (req, res) => {
   try {
     const { _id } = req.app.get("user");
