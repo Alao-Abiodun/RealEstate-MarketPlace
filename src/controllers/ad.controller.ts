@@ -8,6 +8,7 @@ import Ad from "../models/ad.model";
 import User from "../models/user.model";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
+import { sendContactEmailToAgent } from "../utils/helpers/email.helper";
 
 export const createAd = async (
   req: Request,
@@ -306,6 +307,32 @@ export const changeAdStatus = async (req, res) => {
 
     return res.status(200).json({
       message: 'Ad status updated successfully'
+    })
+  } catch (error) {
+    console.log('error', error);
+    return res.status(500).json({
+      message: 'Error while trying to update user ads. Please try again later.'
+    })
+  }
+}
+
+export const contactAgent = async (req, res) => {
+  try {
+    const { _id } = req.app.get('user');
+    const { adId, message } = req.body;
+    const adOwner = await Ad.findById(adId).populate('postedBy');
+    if (!adOwner) {
+      return res.status(404).json({
+        message: 'Ad not found'
+      })
+    }
+
+    const user = await User.findByIdAndUpdate(_id, { $addToSet: { enquiredProperties: adOwner._id } })
+
+    await sendContactEmailToAgent(adOwner, user, message);
+
+    return res.status(200).json({
+      success: true,
     })
   } catch (error) {
     console.log('error', error);
