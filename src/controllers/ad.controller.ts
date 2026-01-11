@@ -353,6 +353,43 @@ export const contactAgent = async (req, res) => {
   }
 };
 
+export const enquiredAds = async (req, res) => {
+  try {
+    const { enquiredProperties } = req.app.get("user");
+    let { page, limit } = req.query;
+    if (page && limit) {
+      page = Number(page) || 1;
+      limit = Number(limit) || 2;
+    }
+    const skip = (page - 1) * limit;
+
+    const totalAds = await Ad.countDocuments({
+      _id: {
+        $in: enquiredProperties,
+      },
+    });
+
+    const ads = await Ad.find({ _id: { $in: enquiredProperties } })
+      .select("-googleMap")
+      .populate("postedBy", "name username email phone company")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      message: "Enquired Properties fetched",
+      ads,
+      totalAds,
+      totalPages: Math.ceil(totalAds / limit),
+    });
+  } catch (error) {
+    console.log("Error", error);
+    return res.status(500).json({
+      message: "Error while fetching the enquired properties, Try again later.",
+    });
+  }
+};
+
 export const uploadImage = async (req, res) => {
   try {
     const { _id } = req.app.get("user");
