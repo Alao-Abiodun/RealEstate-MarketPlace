@@ -109,6 +109,8 @@ export const fetchNearAd = async (req, res) => {
       select: "name username email phone company photo logo",
     });
 
+    await Ad.findByIdAndUpdate(ad._id, { $inc: { views: 1 } });
+
     res.json({ ad, related: relatedWithPopulatedPostedBy });
   } catch (err) {
     console.log(err);
@@ -249,7 +251,7 @@ export const removeAd = async (req, res) => {
 
 export const userAd = async (req, res) => {
   try {
-    const { _id } = req.app.get('user');
+    const { _id } = req.app.get("user");
     let { page, limit } = req.query;
 
     if (page && limit) {
@@ -262,85 +264,131 @@ export const userAd = async (req, res) => {
     const totalAds = await Ad.countDocuments({ postedBy: _id });
 
     const userAds = await Ad.find({ postedBy: _id })
-      .select('-googleMap')
+      .select("-googleMap")
       .populate("postedBy", "name username email phone company")
       .skip(skip)
       .limit(limit)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1 });
 
-      return res.status(200).json({
-        message: 'User ads retrieved successfully',
-        userAds,
-        totalAds,
-        page: Number(page),
-        totalPages: Math.ceil(totalAds / limit),
-      })
+    return res.status(200).json({
+      message: "User ads retrieved successfully",
+      userAds,
+      totalAds,
+      page: Number(page),
+      totalPages: Math.ceil(totalAds / limit),
+    });
   } catch (error) {
-    console.log('error', error);
+    console.log("error", error);
     return res.status(500).json({
-      message: 'Error while trying to fetch user ads. Please try again later.'
-    })
+      message: "Error while trying to fetch user ads. Please try again later.",
+    });
   }
-}
+};
 
 export const changeAdStatus = async (req, res) => {
   try {
-    const { _id } = req.app.get('user');
+    const { _id } = req.app.get("user");
     const { id } = req.params;
     const { adStatus } = req.body;
 
-    const adOwner = await Ad.findOne({ _id: id, postedBy: _id })
+    const adOwner = await Ad.findOne({ _id: id, postedBy: _id });
     if (!adOwner) {
       return res.status(404).json({
-        error: "Ad not found"
-      })
+        error: "Ad not found",
+      });
     }
 
-    const adStatusEnum = ['In Market', 'Deposit taken', 'Under offer', 'Sold', 'Rented', 'Off Market']
+    const adStatusEnum = [
+      "In Market",
+      "Deposit taken",
+      "Under offer",
+      "Sold",
+      "Rented",
+      "Off Market",
+    ];
     if (!adStatusEnum.includes(adStatus)) {
       return res.status(400).json({
-        error: 'Invalid status'
-      })
+        error: "Invalid status",
+      });
     }
 
-    await Ad.findByIdAndUpdate(id, { status: adStatus }, { new: true })
+    await Ad.findByIdAndUpdate(id, { status: adStatus }, { new: true });
 
     return res.status(200).json({
-      message: 'Ad status updated successfully'
-    })
+      message: "Ad status updated successfully",
+    });
   } catch (error) {
-    console.log('error', error);
+    console.log("error", error);
     return res.status(500).json({
-      message: 'Error while trying to update user ads. Please try again later.'
-    })
+      message: "Error while trying to update user ads. Please try again later.",
+    });
   }
-}
+};
 
 export const contactAgent = async (req, res) => {
   try {
-    const { _id } = req.app.get('user');
+    const { _id } = req.app.get("user");
     const { adId, message } = req.body;
-    const adOwner = await Ad.findById(adId).populate('postedBy');
+    const adOwner = await Ad.findById(adId).populate("postedBy");
     if (!adOwner) {
       return res.status(404).json({
-        message: 'Ad not found'
-      })
+        message: "Ad not found",
+      });
     }
 
-    const user = await User.findByIdAndUpdate(_id, { $addToSet: { enquiredProperties: adOwner._id } })
+    const user = await User.findByIdAndUpdate(_id, {
+      $addToSet: { enquiredProperties: adOwner._id },
+    });
 
     await sendContactEmailToAgent(adOwner, user, message);
 
     return res.status(200).json({
       success: true,
-    })
+    });
   } catch (error) {
-    console.log('error', error);
+    console.log("error", error);
     return res.status(500).json({
-      message: 'Error while trying to update user ads. Please try again later.'
-    })
+      message: "Error while trying to update user ads. Please try again later.",
+    });
   }
-}
+};
+
+export const enquiredAds = async (req, res) => {
+  try {
+    const { enquiredProperties } = req.app.get("user");
+    let { page, limit } = req.query;
+    if (page && limit) {
+      page = Number(page) || 1;
+      limit = Number(limit) || 2;
+    }
+    const skip = (page - 1) * limit;
+
+    const totalAds = await Ad.countDocuments({
+      _id: {
+        $in: enquiredProperties,
+      },
+    });
+
+    const ads = await Ad.find({ _id: { $in: enquiredProperties } })
+      .select("-googleMap")
+      .populate("postedBy", "name username email phone company")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      message: "Enquired Properties fetched",
+      ads,
+      totalAds,
+      totalPages: Math.ceil(totalAds / limit),
+    });
+  } catch (error) {
+    console.log("Error", error);
+    return res.status(500).json({
+      message: "Error while fetching the enquired properties, Try again later.",
+    });
+  }
+};
 
 export const uploadImage = async (req, res) => {
   try {
