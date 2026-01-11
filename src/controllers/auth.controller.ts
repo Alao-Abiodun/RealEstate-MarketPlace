@@ -8,6 +8,7 @@ import User from "../models/user.model";
 import { nanoid } from "nanoid";
 import { generateJwtToken } from "../utils/helpers/jwt.helper";
 import { comparePassword, hashPassword } from "../utils/helpers/bcrypt.helper";
+import { removePasswordFromObject } from "../utils/helpers/user.helper";
 
 export const createOrLogin = async (
   req: Request,
@@ -54,7 +55,7 @@ export const createOrLogin = async (
           token,
         });
       } catch (error) {
-        console.log('error', error);
+        console.log("error", error);
         return res.json({
           error: "Invalid email. Please use your valid email.",
         });
@@ -233,5 +234,49 @@ export const changeUserName = async (
         error: "An error occurred while updating the profile",
       });
     }
+  }
+};
+
+export const changeProfile = async (req, res) => {
+  try {
+    const { _id } = req.app.get("user");
+    console.log('_id', _id);
+
+    let updatedValues: any = {};
+
+    const allowedProps = [
+      "name",
+      "phone",
+      "company",
+      "address",
+      "about",
+      "photo",
+      "logo",
+    ];
+
+    for (const prop in req.body) {
+      if (
+        Object.prototype.hasOwnProperty.call(req.body, prop) &&
+        allowedProps.includes(prop)
+      ) {
+        updatedValues[prop] = req.body[prop];
+      }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      _id,
+      { ...updatedValues },
+      { new: true }
+    ).lean();
+
+    return res.status(200).json({
+      message: "User profile updated",
+      user: removePasswordFromObject(updatedUser),
+    });
+  } catch (error) {
+    console.log("error", error);
+    return res.status(500).json({
+      message: "Error while trying to update user profile. Try again later.",
+    });
   }
 };
