@@ -49,9 +49,8 @@ export const createOrLogin = async (
           },
           "1h"
         );
-        newUser.password = undefined;
         return res.json({
-          user: newUser,
+          user: removePasswordFromObject(newUser),
           token,
         });
       } catch (error) {
