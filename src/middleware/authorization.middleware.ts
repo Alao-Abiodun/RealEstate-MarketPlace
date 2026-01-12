@@ -42,3 +42,22 @@ export const userAuth = async (
     })
   }
 };
+
+export const isAdmin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = req.app.get('user');
+    
+    if (!user.role.includes("Admin")) {
+      return res.status(403).json({
+        error: "Access denied. Admin role required."
+      })
+    }
+
+    next();
+  } catch (error) {
+    console.error("isAdmin middleware error:", error);
+    return res.status(500).json({
+      error: "Internal server error"
+    })
+  }
+}
