@@ -402,9 +402,9 @@ export const toggleUserWishlist = async (req, res) => {
 
     const update = isInWishlist
       ? {
-          $pull: { wishlist: adId },
+          $pull: { wishlist: adObjectId },
         }
-      : { $addToSet: { wishlist: adId } };
+      : { $addToSet: { wishlist: adObjectId } };
 
     const updatedUser = await User.findByIdAndUpdate(_id, update, {
       lean: true,
