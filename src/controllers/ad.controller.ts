@@ -398,7 +398,7 @@ export const toggleUserWishlist = async (req, res) => {
 
     const adObjectId = new mongoose.Types.ObjectId(adId);
 
-    const isInWishlist = wishlist.some((id) => id.toString() === adId)
+    const isInWishlist = wishlist.some((id) => id.toString() === adId);
 
     const update = isInWishlist
       ? {
@@ -423,6 +423,132 @@ export const toggleUserWishlist = async (req, res) => {
     return res.status(500).json({
       message:
         "Error while trying to add or remove ads to user wishlist, Try again later.",
+    });
+  }
+};
+
+export const getUserWishlist = async (req, res) => {
+  try {
+    const { wishlist } = req.app.get("user");
+    let { page, limit } = req.query;
+    if (page && limit) {
+      page = Number(page) || 1;
+      limit = Number(limit) || 2;
+    }
+    const skip = (page - 1) * limit;
+
+    const totalAds = await Ad.countDocuments({ _id: { $in: wishlist } });
+
+    const ads = await Ad.find({ _id: { $in: wishlist } })
+      .select("-googleMap")
+      .populate("postedBy", "name username email phone company")
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      message: "User ad wishlist",
+      ads: { data: ads },
+      totalAds,
+      totalPages: Math.ceil(totalAds / page),
+    });
+  } catch (error) {
+    console.log("Error", error);
+    return res.status(500).json({
+      message: "Error while trying to fetch user wishlist, Try again later.",
+    });
+  }
+};
+
+export const searchAds = async (req, res) => {
+  try {
+    const { address, price, action, propertyType, bedrooms, bathrooms } =
+      req.body;
+    let { page = 1, limit } = req.query;
+    const skip = (page - 1) * limit;
+
+    let geo = await geocodeAddress(address);
+
+    let query: any = {
+      location: {
+        $geoWithin: {
+          $centerSphere: [
+            [geo?.location?.coordinates[0], geo?.location?.coordinates[1]],
+            10 / 6371,
+          ],
+        },
+      },
+    };
+
+    if (action) {
+      query.action - action;
+    }
+    if (propertyType && propertyType !== "All") {
+      query.propertyType = propertyType;
+    }
+    if (bedrooms && bedrooms !== "All") {
+      query.bedrooms = parseInt(bedrooms);
+    }
+    if (bathrooms && bathrooms !== "All") {
+      query.bathrooms = parseInt(bathrooms);
+    }
+    if (parseFloat(price)) {
+      const numericPrice = parseFloat(price);
+      const minPrice = numericPrice * 0.8;
+      const maxPrice = numericPrice * 1.2;
+      query.price = {
+        $regex: new RegExp(
+          `^(${minPrice.toFixed(0)} | ${maxPrice.toFixed(0)})`
+        ),
+      };
+    }
+
+    let ads = await Ad.find(query)
+      .limit(limit)
+      .skip(skip)
+      .sort({ createdAt: -1 })
+      .select("-googleMap");
+
+    let totalAds = await Ad.countDocuments(query);
+
+    return res.json({
+      ads: { data: ads },
+      total: totalAds,
+      page,
+      totalPages: Math.ceil(totalAds / limit),
+    });
+  } catch (error) {
+    console.log("error", error);
+    return res.status(500).json({
+      message: "Error while trying to search for ads. Try again later.",
+    });
+  }
+};
+
+export const publishAds = async (req, res) => {
+  try {
+    const { id: adId } = req.params;
+
+    const ad = await Ad.findById(adId);
+    if (!ad) {
+      return res.status(404).json({
+        message: "Ad not found",
+      });
+    }
+
+    const updatedAd = await Ad.findByIdAndUpdate(adId, {
+      published: ad.published ? false : true,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: ad.published ? "Ad unpublished" : "Ad is published",
+      ad: updatedAd,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error while publishing/unpublishing the ad. Try again later.",
     });
   }
 };
