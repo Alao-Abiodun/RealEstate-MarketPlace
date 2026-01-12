@@ -119,27 +119,7 @@ export const forgotPassword = async (
   }
 };
 
-export const fetchMe = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const user = req.app.get("user");
-
-    const profile = await User.findById(user._id);
-
-    return res.json({
-      profile,
-    });
-  } catch (error) {
-    return res.json({
-      error: `Something went wrong`,
-    });
-  }
-};
-
-export const changePassword = async (
+export const resetPassword = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -157,7 +137,7 @@ export const changePassword = async (
 
     if (password?.length < 6) {
       return res.json({
-        error: "Password should atleast 6 characters long.",
+        error: "Password should at least 6 characters long.",
       });
     }
 
@@ -178,104 +158,6 @@ export const changePassword = async (
   } catch (error) {
     return res.status(403).json({
       error: "An error occurred while updating the password",
-    });
-  }
-};
-
-export const changeUserName = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { username } = req.body;
-
-    if (!username || !username?.trim()) {
-      return res.json({
-        error: "Username is required",
-      });
-    }
-
-    const trimmedUsername = username?.trim();
-
-    const existingUser = await User.findOne({
-      username: trimmedUsername,
-    });
-
-    if (existingUser) {
-      return res.json({
-        error: "Username is already taken",
-      });
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      existingUser._id,
-      { username: trimmedUsername },
-      { new: true, runValidators: true }
-    );
-
-    if (!updatedUser) {
-      return res.status(400).json({
-        error: "Updated failed. Try again",
-      });
-    }
-
-    updatedUser.password = undefined;
-
-    res.json(updatedUser);
-  } catch (error) {
-    if (error.code === 11000) {
-      return res.status(400).json({
-        error: "Username is already taken",
-      });
-    } else {
-      return res.status(500).json({
-        error: "An error occurred while updating the profile",
-      });
-    }
-  }
-};
-
-export const changeProfile = async (req, res) => {
-  try {
-    const { _id } = req.app.get("user");
-    console.log('_id', _id);
-
-    let updatedValues: any = {};
-
-    const allowedProps = [
-      "name",
-      "phone",
-      "company",
-      "address",
-      "about",
-      "photo",
-      "logo",
-    ];
-
-    for (const prop in req.body) {
-      if (
-        Object.prototype.hasOwnProperty.call(req.body, prop) &&
-        allowedProps.includes(prop)
-      ) {
-        updatedValues[prop] = req.body[prop];
-      }
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      _id,
-      { ...updatedValues },
-      { new: true }
-    ).lean();
-
-    return res.status(200).json({
-      message: "User profile updated",
-      user: removePasswordFromObject(updatedUser),
-    });
-  } catch (error) {
-    console.log("error", error);
-    return res.status(500).json({
-      message: "Error while trying to update user profile. Try again later.",
     });
   }
 };

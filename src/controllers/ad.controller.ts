@@ -9,6 +9,7 @@ import User from "../models/user.model";
 import slugify from "slugify";
 import { nanoid } from "nanoid";
 import { sendContactEmailToAgent } from "../utils/helpers/email.helper";
+import mongoose from "mongoose";
 
 export const createAd = async (
   req: Request,
@@ -386,6 +387,42 @@ export const enquiredAds = async (req, res) => {
     console.log("Error", error);
     return res.status(500).json({
       message: "Error while fetching the enquired properties, Try again later.",
+    });
+  }
+};
+
+export const toggleUserWishlist = async (req, res) => {
+  try {
+    const { _id, wishlist } = req.app.get("user");
+    const { id: adId } = req.params;
+
+    const adObjectId = new mongoose.Types.ObjectId(adId);
+
+    const isInWishlist = wishlist.some((id) => id.toString() === adId)
+
+    const update = isInWishlist
+      ? {
+          $pull: { wishlist: adId },
+        }
+      : { $addToSet: { wishlist: adId } };
+
+    const updatedUser = await User.findByIdAndUpdate(_id, update, {
+      lean: true,
+      new: true,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: isInWishlist
+        ? "Ad removed from user wishlist"
+        : "Ad added to user wishlist",
+      wishlist: updatedUser.wishlist,
+    });
+  } catch (error) {
+    console.log("Error", error);
+    return res.status(500).json({
+      message:
+        "Error while trying to add or remove ads to user wishlist, Try again later.",
     });
   }
 };

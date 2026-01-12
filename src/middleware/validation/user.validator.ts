@@ -7,7 +7,7 @@ const errorFormatter = ({ msg }: ValidationError) => {
 };
 
 /**
- * Validate create ad body
+ * Validate create update profile request
  * @param req The request function object
  * @param res The response function object
  * @param next The next function object
@@ -41,3 +41,27 @@ export const updateProfileValidator = async (
   }
   next();
 };
+
+/**
+ * Validate create ad body
+ * @param req The request function object
+ * @param res The response function object
+ * @param next The next function object
+ * @returns 
+ */ 
+export const updateUserNameValidator = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    await Promise.all([
+      body("username").notEmpty().withMessage("username is required").run(req),
+    ]);
+    const errors = validationResult(req).formatWith(errorFormatter);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        error: errors.array().join(', ')
+      })
+    }
+    next();
+  };
