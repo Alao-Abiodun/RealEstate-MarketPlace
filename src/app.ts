@@ -3,6 +3,14 @@ import cors from 'cors';
 import morgan from 'morgan';
 import helmet from 'helmet';
 import compression from 'compression';
+import { rateLimit } from 'express-rate-limit';
+
+const rateLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000,
+    limit: 10,
+    statusCode: 429,
+    message: "Too many request from this IP. Please try again"
+})
 
 const app: Application = express();
 
@@ -14,6 +22,7 @@ app.use(helmet());
 app.use(compression());
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(rateLimiter)
 
 
 app.use('/marketplace/api/v1', routes)
