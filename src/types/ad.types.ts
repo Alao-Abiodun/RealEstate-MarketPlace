@@ -8,4 +8,5 @@ export interface AdDocument extends Document {
     action: string;
     propertyType: string;
     postedBy: Types.ObjectId;
+    published?: Boolean;
 }

@@ -12,9 +12,12 @@ import {
   contactAgent,
   enquiredAds,
   toggleUserWishlist,
+  getUserWishlist,
+  searchAds,
+  publishAds,
 } from "../controllers/ad.controller";
 import { uploadFile } from "../utils/helpers/imageHandler.helper";
-import { userAuth } from "../middleware/authorization.middleware";
+import { isAdmin, userAuth } from "../middleware/authorization.middleware";
 import { createAdValidator } from "../middleware/validation/realestate.validator";
 
 export default (router: Router) => {
@@ -23,7 +26,10 @@ export default (router: Router) => {
   router.get("/ad/user", userAd);
   router.post("/ad/contact-agent", contactAgent);
   router.get("/ad/enquired-ad", enquiredAds);
+  router.get("/ad/user/wishlist", getUserWishlist);
+  router.post("/ad/search-ads", searchAds);
   router.patch("/ad/toggle-wishlist/:id", toggleUserWishlist);
+  router.put("/ad/publish/:id", isAdmin, publishAds);
   router.get("/ad/for-sell-and-rent/:actionType", adsForSellOrRent);
   router.put("/ad/:id", changeAd);
   router.delete("/ad/:id", removeAd);
