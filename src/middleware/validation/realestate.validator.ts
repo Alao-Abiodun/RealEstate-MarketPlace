@@ -19,7 +19,6 @@ export const createAdValidator = async (
   next: NextFunction
 ) => {
   await Promise.all([
-    body("photos").isArray({ min: 1 }).withMessage("photos is required").run(req),
     body("price").notEmpty().withMessage("price is required").run(req),
     body("address")
       .trim()
