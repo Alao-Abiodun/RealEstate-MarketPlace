@@ -1,7 +1,5 @@
 import { Router } from "express";
 import {
-  uploadImage,
-  removeImage,
   createAd,
   fetchNearAd,
   adsForSellOrRent,
@@ -35,6 +33,4 @@ export default (router: Router) => {
   router.delete("/ad/:id", removeAd);
   router.patch("/ad/:id/status", changeAdStatus);
   router.get("/ad/:slug", fetchNearAd);
-  router.post("/ad/upload-image", uploadFile.any(), uploadImage);
-  router.delete("/ad/remove-image", uploadFile.any(), removeImage);
 };
