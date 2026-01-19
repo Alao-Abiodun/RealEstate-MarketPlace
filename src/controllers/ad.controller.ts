@@ -17,11 +17,23 @@ export const createAd = async (
   next: NextFunction
 ) => {
   try {
-    const { _id } = req.app.get("user");
+    const { _id, username } = req.app.get("user");
 
-    const adData = { ...req.body };
+    let adData = { ...req.body };
 
     const { propertyType, action, address, price } = adData;
+
+    if (req.files && Array.isArray(req.files)) {
+      const photos = req.files;
+      let photoObjs = []
+      for (const photo of photos) {
+        const uploadedPhotos = await uploadImageToS3(photo, username);
+        if (uploadedPhotos) {
+          photoObjs.push(...uploadedPhotos)
+        }
+      }
+      adData.photos = photoObjs;
+    } 
 
     let geo;
     try {
@@ -555,13 +567,13 @@ export const publishAds = async (req, res) => {
 
 export const uploadImage = async (req, res) => {
   try {
-    const { _id } = req.app.get("user");
+    const { username } = req.app.get("user");
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: "No image files provided" });
     }
     // If only one file is uploaded, multer returns it as a single object, not an array
     const files = Array.isArray(req.files) ? req.files : [req.files];
-    const results = await uploadImageToS3(files, _id);
+    const results = await uploadImageToS3(files, username);
     res.json(results);
   } catch (err) {
     console.error(err);
