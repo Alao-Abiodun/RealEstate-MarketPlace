@@ -22,7 +22,7 @@ import { createAdValidator } from "../middleware/validation/realestate.validator
 
 export default (router: Router) => {
   router.use(userAuth);
-  router.post("/ad", createAdValidator, createAd);
+  router.post("/ad", uploadFile.array("photos"), createAdValidator, createAd);
   router.get("/ad/user", userAd);
   router.post("/ad/contact-agent", contactAgent);
   router.get("/ad/enquired-ad", enquiredAds);

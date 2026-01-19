@@ -1,15 +1,17 @@
 import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { Request } from'express';
 import { nanoid } from "nanoid";
 import sharp from "sharp";
 import s3 from "../../config/s3.config";
-import multer from 'multer';
+import multer, { FileFilterCallback } from 'multer';
 import { fileURLToPath } from 'url';
 import path from "path";
+import { tokenGenerator } from "../libs/keyGenerator";
 const __filename = fileURLToPath(import.meta.url);
-const __direname = path.dirname(__filename)
+const __dirname = path.dirname(__filename)
 
-function fileFilter (req: Request, file: any, cb: any) {
-    if (!file.mimetype.start('image')) {
+function fileFilter (req: Request, file: Express.Multer.File, cb: FileFilterCallback) {
+    if (!file.mimetype.startsWith('image')) {
       return cb(new Error("Only image is allowed."))
     }
 
@@ -18,11 +20,10 @@ function fileFilter (req: Request, file: any, cb: any) {
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__direname, '../../uploads'))
+    cb(null, path.join(__dirname, '../../uploads'))
   },
   filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9)
-    cb(null, path.extname(file.originalname) + '-' + uniqueSuffix)
+    cb(null, tokenGenerator(6)  + path.extname(file.originalname))
   }
 })
 
@@ -33,34 +34,35 @@ export const uploadFile = multer({
 })
 
 export const uploadImageToS3 = async (files: any, uploadedBy: string) => {
-  if (!files || files.length === 0) {
-    throw new Error("No image is uploaded");
-  }
+    const fileArray = Array.isArray(files) ? files : [files];
 
-  const fileArray = Array.isArray(files) ? files : [files];
-
-  const uploadPromises = fileArray.map(async (file) => {
-    const resizeBuffer = await resizeImage(file.buffer);
-
-    return uploadToS3(resizeBuffer, file.mimetype, uploadedBy);
-  });
-
-  return Promise.all(uploadPromises);
+    if (fileArray && fileArray.length === 0) {
+      throw new Error("No image is uploaded");
+    }
+  
+    const uploadPromises = await fileArray.map(async (file) => {
+      const resizeBuffer = await resizeImage(file.path);
+  
+      return uploadToS3(resizeBuffer, file.mimetype, uploadedBy);
+    });
+  
+    return Promise.all(uploadPromises);
 };
 
 const resizeImage = async (buffer) => {
-  return sharp(buffer)
+  const res = await sharp(buffer)
     .resize(1600, 900, { fit: "inside", withoutEnlargement: true })
     .toBuffer();
+    return res;
 };
 
 const uploadToS3 = async (buffer, mimeType, uploadedBy) => {
   const metadata = await sharp(buffer).metadata();
-  const fileExtension = metadata.format || "jpg"; // Use format if available, default to jpg
+  const fileExtension = metadata.format || "jpg";
   const Key = `${nanoid()}.${fileExtension}`;
   const Location = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${Key}`;
   const params = {
-    Bucket: process.env.AWS_BUCKET_NAME,
+    Bucket: String(process.env.AWS_BUCKET_NAME),
     Key,
     Body: buffer,
     ContentType: mimeType,
@@ -68,7 +70,7 @@ const uploadToS3 = async (buffer, mimeType, uploadedBy) => {
   try {
     const command = new PutObjectCommand(params);
     await s3.send(command);
-    return { Key, Location, uploadedBy };
+    return { key: Location, Location, uploadedBy };
   } catch (error) {
     console.error("Error uploading to S3:", error);
     throw error;
