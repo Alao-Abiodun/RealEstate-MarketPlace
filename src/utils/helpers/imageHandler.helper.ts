@@ -4,11 +4,8 @@ import { nanoid } from "nanoid";
 import sharp from "sharp";
 import s3 from "../../config/s3.config";
 import multer, { FileFilterCallback } from 'multer';
-import { fileURLToPath } from 'url';
 import path from "path";
 import { tokenGenerator } from "../libs/keyGenerator";
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename)
 
 function fileFilter (req: Request, file: Express.Multer.File, cb: FileFilterCallback) {
     if (!file.mimetype.startsWith('image')) {
