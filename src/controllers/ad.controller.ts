@@ -7,9 +7,9 @@ import { geocodeAddress } from "../services/geocoder.services";
 import Ad from "../models/ad.model";
 import User from "../models/user.model";
 import slugify from "slugify";
-import { nanoid } from "nanoid";
 import { sendContactEmailToAgent } from "../utils/helpers/email.helper";
 import mongoose from "mongoose";
+import { tokenGenerator } from "@/utils/libs/keyGenerator";
 
 export const createAd = async (
   req: Request,
@@ -43,7 +43,7 @@ export const createAd = async (
         Ad.create({
           ...adData,
           slug: slugify(
-            `${propertyType}-for-${action}-address-${address}-price-${price}-${nanoid(
+            `${propertyType}-for-${action}-address-${address}-price-${price}-${tokenGenerator(
               6
             )}`
           ),
@@ -203,7 +203,7 @@ export const changeAd = async (req, res) => {
       updatedValues.slug = slugify(
         `${updatedValues.propertyType}-for-${updatedValues.action}-address-${
           updatedValues.address
-        }-price-${updatedValues.price}-${nanoid(6)}`
+        }-price-${updatedValues.price}-${tokenGenerator(6)}`
       );
       updatedValues.location = {
         type: "Point",
