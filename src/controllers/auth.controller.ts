@@ -5,10 +5,10 @@ import {
 } from "../utils/helpers/email.helper";
 import validator from "email-validator";
 import User from "../models/user.model";
-import { nanoid } from "nanoid";
 import { generateJwtToken } from "../utils/helpers/jwt.helper";
 import { comparePassword, hashPassword } from "../utils/helpers/bcrypt.helper";
 import { removePasswordFromObject } from "../utils/helpers/user.helper";
+import { tokenGenerator } from "@/utils/libs/keyGenerator";
 
 export const createOrLogin = async (
   req: Request,
@@ -39,7 +39,7 @@ export const createOrLogin = async (
         const newUser = await User.create({
           email,
           password: await hashPassword(password),
-          username: nanoid(6),
+          username: tokenGenerator(6),
         });
 
         const token = generateJwtToken(
@@ -101,7 +101,7 @@ export const forgotPassword = async (
         "If we find your account, you will receive an email from us shortly",
     });
   } else {
-    const password = nanoid(6);
+    const password = tokenGenerator(6);
     user.password = await hashPassword(password);
     await user.save();
 

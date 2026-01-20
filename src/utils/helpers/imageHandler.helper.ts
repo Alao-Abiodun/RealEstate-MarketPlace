@@ -1,6 +1,5 @@
 import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { Request } from'express';
-import { nanoid } from "nanoid";
 import sharp from "sharp";
 import s3 from "../../config/s3.config";
 import multer, { FileFilterCallback } from 'multer';
@@ -56,7 +55,7 @@ const resizeImage = async (buffer) => {
 const uploadToS3 = async (buffer, mimeType, uploadedBy) => {
   const metadata = await sharp(buffer).metadata();
   const fileExtension = metadata.format || "jpg";
-  const Key = `${nanoid()}.${fileExtension}`;
+  const Key = `${tokenGenerator(6)}.${fileExtension}`;
   const Location = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${Key}`;
   const params = {
     Bucket: String(process.env.AWS_BUCKET_NAME),
