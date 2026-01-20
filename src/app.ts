@@ -29,7 +29,7 @@ app.use('/marketplace/api/v1', routes)
 
 app.get('/marketplace', (req: Request, res: Response, next: NextFunction) => {
     return res.status(200).json({
-        message: 'Welcome to Real Estate MarketPlace service 🚀'
+        message: 'Welcome to adHome MarketPlace service 🚀'
     })
 })
 
