@@ -63,7 +63,7 @@ const adSchema = new Schema(
     nearBy: {},
     postedBy: { type: Types.ObjectId, ref: "User" },
     sold: { type: Boolean, default: false },
-    published: { type: Boolean, default: true },
+    published: { type: Boolean, default: false },
     action: {
       type: String,
       default: "Sell",
